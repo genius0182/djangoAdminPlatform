@@ -1,2 +1,2 @@
 # django-admin-platform
-django management system
+django management system coding
