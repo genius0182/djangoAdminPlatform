@@ -1,6 +1,5 @@
 from django.db import models
 from utils.baseModel import SoftModel, BaseModel
-from django.db.models import JSONField
 from django.contrib.auth.models import AbstractUser
 import django.utils.timezone as timezone
 
@@ -16,6 +15,7 @@ class Dept(SoftModel):
     dept_sort = models.IntegerField('排序', default=999)
 
     class Meta:
+        managed = False
         verbose_name = '部门'
         verbose_name_plural = verbose_name
         ordering = ['id']
@@ -43,6 +43,7 @@ class Menu(SoftModel):
     permission = models.CharField('权限', max_length=255, null=True)
 
     class Meta:
+        managed = False
         verbose_name = '部门'
         verbose_name_plural = verbose_name
         ordering = ['menu_sort']
@@ -50,7 +51,6 @@ class Menu(SoftModel):
 
     def __str__(self):
         return self.name
-
 
 
 class Role(SoftModel):
@@ -70,12 +70,13 @@ class Role(SoftModel):
     description = models.CharField('描述', max_length=255, blank=True, null=True)
     data_scope = models.CharField('数据权限', max_length=255,
                                   choices=data_type_choices, default='本级及以下')
-    perms = models.ManyToManyField(Menu, blank=True, verbose_name='角色菜单关联')
+    menus = models.ManyToManyField(Menu, blank=True, verbose_name='角色菜单关联')
 
     depts = models.ManyToManyField(
         Dept, blank=True, verbose_name='角色部门关联')
 
     class Meta:
+        managed = False
         verbose_name = '角色'
         verbose_name_plural = verbose_name
         ordering = ['id']
@@ -102,6 +103,7 @@ class User(SoftModel):
     roles = models.ManyToManyField(Role, blank=True, verbose_name='用户角色关联')
 
     class Meta:
+        managed = False
         verbose_name = '用户信息'
         verbose_name_plural = verbose_name
         unique_together = ('username', 'phone', 'email')
@@ -121,6 +123,7 @@ class DictType(SoftModel):
                                on_delete=models.SET_NULL, verbose_name='父')
 
     class Meta:
+        managed = False
         verbose_name = '字典类型'
         verbose_name_plural = verbose_name
 
@@ -136,15 +139,16 @@ class Dict(SoftModel):
     code = models.CharField('编号', max_length=30, null=True, blank=True)
     fullname = models.CharField('全名', max_length=1000, null=True, blank=True)
     description = models.TextField('描述', blank=True, null=True)
-    other = JSONField('其它信息', blank=True, null=True)
+    other = models.TextField('其它信息', blank=True, null=True)
     type = models.ForeignKey(DictType, on_delete=models.CASCADE, verbose_name='类型')
     sort = models.IntegerField('排序', default=1)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='父')
 
     class Meta:
+        managed = False
         verbose_name = '字典'
         verbose_name_plural = verbose_name
-        unique_together = ('name',  'type')
+        unique_together = ('name', 'type')
 
     def __str__(self):
         return self.name

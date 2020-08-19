@@ -9,9 +9,9 @@ class BaseModel(models.Model):
 
     create_by = models.CharField(null=True, blank=True, verbose_name='创建者', help_text='创建者', max_length=50)
     update_by = models.CharField(null=True, blank=True, verbose_name='创建者', help_text='创建者', max_length=50)
-    create_date = models.DateTimeField(
+    create_time = models.DateTimeField(
         default=timezone.now, verbose_name='创建时间', help_text='创建时间')
-    last_update_date = models.DateTimeField(
+    update_time = models.DateTimeField(
         auto_now=True, verbose_name='修改时间', help_text='修改时间')
     is_deleted = models.BooleanField(
         default=False, verbose_name='删除标记', help_text='删除标记')
