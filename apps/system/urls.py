@@ -4,7 +4,6 @@ from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register('dict', DictViewSet, basename="dict")
-# TODO
 router.register('user', UserViewSet, basename="user")
 router.register('dept', DeptViewSet, basename="dept")
 router.register('menu', MenuViewSet, basename="menu")
