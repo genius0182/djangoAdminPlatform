@@ -5,6 +5,6 @@ django-timezone-field==4.0
 django-filter==2.3.0
 django-redis==4.12.1
 djangorestframework==3.11.1
-djangorestframework-jwt==1.11.0
+djangorestframework-simplejwt==4.4.0
 mysqlclient==2.0.1
-djorm-ext-pool==0.8.2#https://juejin.im/post/6844904139109957645
+# djorm-ext-pool==0.8.2#https://juejin.im/post/6844904139109957645

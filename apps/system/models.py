@@ -1,8 +1,8 @@
 from django.db import models
 from utils.baseModel import SoftModel, BaseModel
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractBaseUser
 import django.utils.timezone as timezone
-
+from django.contrib.auth.models import BaseUserManager
 
 class Dept(SoftModel):
     """
@@ -85,11 +85,12 @@ class Role(SoftModel):
         return self.name
 
 
-class User(SoftModel):
+class User(AbstractBaseUser):
     """
     用户
     """
     username = models.CharField('用户名', max_length=255, null=True, blank=True, unique=True)
+    USERNAME_FIELD = 'username'
     nick_name = models.CharField('昵称', max_length=255, null=True, blank=True)
     gender = models.CharField('性别', max_length=2, null=True)
     phone = models.CharField('手机号', max_length=255, null=True, blank=True, unique=True)
@@ -101,6 +102,8 @@ class User(SoftModel):
     dept = models.ForeignKey(
         Dept, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='部门')
     roles = models.ManyToManyField(Role, blank=True, verbose_name='用户角色关联')
+
+    objects = BaseUserManager()
 
     class Meta:
         managed = False

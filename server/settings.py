@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import datetime, timedelta
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -24,7 +26,7 @@ SECRET_KEY = '(odaf!f_qd2cspu4^_vut#29gc4s@qwm)c!m*kemop)9zvjs&&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -92,6 +94,18 @@ DATABASES = {
     }
 }
 
+# 缓存配置
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # "PICKLE_VERSION": -1
+        }
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
@@ -111,11 +125,24 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-    # 'EXCEPTION_HANDLER': 'api.exception_handler.custom_exception_handler',
+    # JWT
+    # 'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
+    # ],
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.IsAuthenticated',
+    #     'apps.system.rbac_perm.RbacPermission'
+    # ],
     'DEFAULT_RENDERER_CLASSES': [
         'utils.baseResponse.FitJSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer'
     ],
+}
+
+# JWT配置 里面具体配置可以参考文档
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # 配置过期时间
+    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=),
 }
 
 # Internationalization
@@ -139,3 +166,5 @@ STATIC_URL = '/static/'
 # 跨域配置
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = False
+
+AUTH_USER_MODEL = 'system.User'

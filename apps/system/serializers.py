@@ -1,6 +1,25 @@
 from rest_framework import serializers
 import re
 from .models import (Dict, DictType, Dept, Menu, Role, User)
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    '''
+    token验证
+    '''
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        refresh = self.get_token(self.user)
+
+        data['refresh'] = str(refresh)
+        data['access'] = str(refresh.access_token)
+        data['username'] = self.user.username  # 这个是你的自定义返回的
+        data['user_id'] = self.user.id  # 这个是你的自定义返回的
+
+        return data
 
 
 class DictTypeSerializer(serializers.ModelSerializer):
@@ -63,14 +82,14 @@ class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'phone', 'email', 'nick_name', 'gender', 'dept'
+        fields = ['id', 'phone', 'email', 'nick_name', 'gender', 'dept',
                                                                  'username', 'is_admin', 'avatar_name', 'avatar_path',
                   'pwd_reset_time', 'roles_name', 'dept_name']
 
     @staticmethod
     def setup_eager_loading(queryset):
         """ Perform necessary eager loading of data. """
-        queryset = queryset.select_related('superior', 'dept')
+        queryset = queryset.select_related('dept')
         queryset = queryset.prefetch_related('roles', )
         return queryset
 
