@@ -188,10 +188,10 @@ class UserViewSet(ModelViewSet):
         data = {
             'id': user.id,
             'username': user.username,
-            'name': user.name,
+            'nick_name': user.nick_name,
             'roles': user.roles.values_list('name', flat=True),
             # 'avatar': request._request._current_scheme_host + '/media/' + str(user.image),
-            'avatar': user.avatar,
+            'avatar_path': user.avatar_path,
             'perms': perms,
         }
         return Response(data)

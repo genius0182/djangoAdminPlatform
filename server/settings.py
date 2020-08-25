@@ -126,13 +126,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     # JWT
-    # 'DEFAULT_AUTHENTICATION_CLASSES': [
-    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    # ],
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.IsAuthenticated',
-    #     'apps.system.rbac_perm.RbacPermission'
-    # ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+        'apps.system.rbac_perm.RbacPermission'
+    ],
     'DEFAULT_RENDERER_CLASSES': [
         'utils.baseResponse.FitJSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer'

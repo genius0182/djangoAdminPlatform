@@ -14,8 +14,10 @@ def get_permission_list(user):
         roles = user.roles.all()
         if roles:
             for i in roles:
-                perms = perms | i.perms.all()
-        perms_list = perms.values_list('method', flat=True)
+                perms = perms | i.menus.all()
+        perms_list = perms.values_list('permission', flat=True)
+        # filter null value
+        perms_list = list(filter(lambda a:(a),perms_list))
         perms_list = list(set(perms_list))
     cache.set(user.username + '__perms', perms_list)
     # cache.persist(user.username)
