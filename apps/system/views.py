@@ -1,22 +1,23 @@
 import logging
-import json
+
+from django.contrib.auth.hashers import check_password, make_password
 from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from .serializers import (MyTokenObtainPairSerializer, DictSerializer, DictTypeSerializer, RoleSerializer,
-                          DeptSerializer, MenuSerializer,
-                          UserListSerializer, UserModifySerializer, UserCreateSerializer)
-from .models import (Dict, DictType, Dept, Menu, Role, User)
-from rest_framework.views import APIView
 from rest_framework.decorators import action
-from rest_framework_simplejwt.views import TokenViewBase, TokenObtainPairView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+from rest_framework_extensions.cache.decorators import cache_response
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.views import TokenViewBase, TokenObtainPairView
+
 from utils.querySetUtil import get_child_queryset2
+from .models import (Dict, Dept, Role, User)
 # from .filters import UserFilter
 from .rbac_perm import get_permission_list
-from django.contrib.auth.hashers import check_password, make_password
-from rest_framework.permissions import IsAuthenticated
-
+from .serializers import (MyTokenObtainPairSerializer, DictSerializer, RoleSerializer,
+                          DeptSerializer, MenuSerializer,
+                          UserListSerializer, UserModifySerializer, UserCreateSerializer)
 
 logger = logging.getLogger('log')
 
@@ -33,6 +34,17 @@ class MyTokenRefreshView(TokenViewBase):
     自定义刷新token refresh: 刷新token的元素
     """
     serializer_class = TokenRefreshSerializer
+
+
+class TestRoleView(APIView):
+    @cache_response(key_func='role_func')
+    def get(self, request, *args, **kwargs):
+        roles = Role.objects.all()
+        serializer = RoleSerializer(roles, many=True)
+        return Response(serializer.data)
+
+    def role_func(self, view_instance, view_method, request, args, kwargs):
+        return "role_{}".format(request.user.id)
 
 
 class DeptViewSet(ModelViewSet):
@@ -157,7 +169,7 @@ class UserViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @action(methods=['put'], detail=False,
-            permission_classes=[IsAuthenticated], # perms_map={'put':'change_password'}
+            permission_classes=[IsAuthenticated],  # perms_map={'put':'change_password'}
             url_name='change_password')
     def password(self, request, pk=None):
         """
