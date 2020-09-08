@@ -129,7 +129,7 @@ class DictViewSet(ModelViewSet):
     }
     # queryset = Dict.objects.get_queryset(all=True) # 获取全部的,包括软删除的
     queryset = Dict.objects.all()
-    filterset_fields = ["type", "is_used", "type__code"]
+    filter_set_fields = ["type", "is_used", "type__code"]
     serializer_class = DictSerializer
     search_fields = ["name"]
     ordering_fields = ["sort"]
@@ -174,7 +174,7 @@ class UserViewSet(ModelViewSet):
     }
     queryset = User.objects.all()
     serializer_class = UserListSerializer
-    # filterset_class = UserFilter
+    # filter_set_class = UserFilter
     search_fields = ["username", "name", "phone", "email"]
     ordering_fields = ["-pk"]
 
@@ -184,8 +184,8 @@ class UserViewSet(ModelViewSet):
             queryset = self.get_serializer_class().setup_eager_loading(queryset)  # 性能优化
         dept = self.request.query_params.get("dept", None)  # 该部门及其子部门所有员工
         if dept is not None:
-            deptqueryset = get_child_queryset2(Dept.objects.get(pk=dept))
-            queryset = queryset.filter(dept__in=deptqueryset)
+            dept_query_set = get_child_queryset2(Dept.objects.get(pk=dept))
+            queryset = queryset.filter(dept__in=dept_query_set)
         return queryset
 
     def get_serializer_class(self):
