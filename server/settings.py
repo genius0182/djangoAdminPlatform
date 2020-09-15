@@ -82,15 +82,27 @@ WSGI_APPLICATION = "server.wsgi.application"
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# mysql
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.mysql",
+#         "NAME": "djangodb",
+#         "USER": "root",
+#         "PASSWORD": "123456",
+#         "HOST": "127.0.0.1",
+#         "PORT": "3306",
+#     }
+# }
 
+# postgresql12.3
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "djangodb",
-        "USER": "root",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "django_test",
+        "USER": "postgres",
         "PASSWORD": "123456",
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -179,7 +191,7 @@ STATIC_URL = "/static/"
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = False
 
-AUTH_USER_MODEL = "system.User"
+AUTH_USER_MODEL = "system.Users"
 
 # 日志配置
 # 创建日志的路径

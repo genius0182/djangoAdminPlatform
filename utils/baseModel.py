@@ -13,16 +13,20 @@ class BaseModel(models.Model):
     update_by = models.CharField(
         null=True, blank=True, verbose_name="创建者", help_text="创建者", max_length=50
     )
-    create_time = models.DateTimeField(
-        default=timezone.now, verbose_name="创建时间", help_text="创建时间"
+    create_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="创建时间",
+        help_text="创建时间",
+        null=True,
+        blank=True,
     )
-    update_time = models.DateTimeField(
-        auto_now=True, verbose_name="修改时间", help_text="修改时间"
+    update_at = models.DateTimeField(
+        auto_now=True, verbose_name="修改时间", help_text="修改时间", null=True, blank=True
     )
     is_deleted = models.BooleanField(
         default=False, verbose_name="删除标记", help_text="删除标记"
     )
-    enabled = models.BooleanField(
+    is_activate = models.BooleanField(
         default=False, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
     )
 

@@ -3,7 +3,7 @@ import re
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Dict, DictType, Dept, Menu, Role, User
+from .models import Dict, DictType, Dept, Menu, Role, Users
 from .rbac_perm import get_permission_list
 
 
@@ -19,9 +19,9 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         perms = get_permission_list(self.user)
         data["refresh"] = str(refresh)
         data["access"] = str(refresh.access_token)
-        data["username"] = self.user.username  # 这个是你的自定义返回的
-        data["user_id"] = self.user.id  # 这个是你的自定义返回的
-        data["roles"] = self.user.roles.values_list("name", flat=True)
+        data["user_name"] = self.user.user_name  # 这个是你的自定义返回的
+        data["id"] = self.user.id  # 这个是你的自定义返回的
+        data["roles"] = self.user.roles.values_list("role_name", flat=True)
         data["perms"] = perms
 
         return data
@@ -87,7 +87,7 @@ class UserListSerializer(serializers.ModelSerializer):
     roles_name = serializers.StringRelatedField(source="roles", many=True)
 
     class Meta:
-        model = User
+        model = Users
         fields = [
             "id",
             "phone",
@@ -95,7 +95,7 @@ class UserListSerializer(serializers.ModelSerializer):
             "nick_name",
             "gender",
             "dept",
-            "username",
+            "user_name",
             "is_admin",
             "avatar_name",
             "avatar_path",
@@ -122,10 +122,10 @@ class UserModifySerializer(serializers.ModelSerializer):
     phone = serializers.CharField(max_length=11, read_only=True)
 
     class Meta:
-        model = User
+        model = Users
         fields = [
             "id",
-            "username",
+            "user_name",
             "nick_name",
             "gender",
             "phone",
@@ -150,14 +150,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
     创建用户序列化
     """
 
-    username = serializers.CharField(required=True)
+    user_name = serializers.CharField(required=True)
     phone = serializers.CharField(max_length=11, read_only=True)
 
     class Meta:
-        model = User
+        model = Users
         fields = [
             "id",
-            "username",
+            "user_name",
             "nick_name",
             "gender",
             "phone",
@@ -170,16 +170,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
         ]
 
     @staticmethod
-    def validate_username(username):
-        if User.objects.filter(username=username):
-            raise serializers.ValidationError(username + " 账号已存在")
-        return username
+    def validate_username(user_name):
+        if Users.objects.filter(user_name=user_name):
+            raise serializers.ValidationError(user_name + " 账号已存在")
+        return user_name
 
     @staticmethod
     def validate_phone(phone):
         re_phone = r"^1[358]\d{9}$|^147\d{8}$|^176\d{8}$"
         if not re.match(re_phone, phone):
             raise serializers.ValidationError("手机号码不合法")
-        if User.objects.filter(phone=phone):
+        if Users.objects.filter(phone=phone):
             raise serializers.ValidationError("手机号已经被注册")
         return phone

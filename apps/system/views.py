@@ -12,7 +12,7 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenViewBase, TokenObtainPairView
 
 from utils.querySetUtil import get_child_queryset2
-from .models import Dict, Dept, Role, User
+from .models import Dict, Dept, Role, Users
 # from .filters import UserFilter
 from .rbac_perm import get_permission_list
 from .serializers import (
@@ -31,7 +31,7 @@ logger = logging.getLogger("log")
 
 class MyTokenObtainPairView(TokenObtainPairView):
     """
-    自定义得到token username: 账号或者密码 password: 密码或者验证码
+    自定义得到token user_name: 账号或者密码 password: 密码或者验证码
     """
 
     serializer_class = MyTokenObtainPairSerializer
@@ -172,10 +172,10 @@ class UserViewSet(ModelViewSet):
         "put": "user_update",
         "delete": "user_delete",
     }
-    queryset = User.objects.all()
+    queryset = Users.objects.all()
     serializer_class = UserListSerializer
     # filter_set_class = UserFilter
-    search_fields = ["username", "name", "phone", "email"]
+    search_fields = ["user_name", "phone", "email"]
     ordering_fields = ["-pk"]
 
     def get_queryset(self):
@@ -247,7 +247,7 @@ class UserViewSet(ModelViewSet):
         perms = get_permission_list(user)
         data = {
             "id": user.id,
-            "username": user.username,
+            "user_name": user.user_name,
             "nick_name": user.nick_name,
             "roles": user.roles.values_list("name", flat=True),
             # 'avatar': request._request._current_scheme_host + '/media/' + str(user.image),

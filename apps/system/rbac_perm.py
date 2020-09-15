@@ -21,8 +21,8 @@ def get_permission_list(user):
         # filter null value
         perms_list = list(filter(lambda a: (a), perms_list))
         perms_list = list(set(perms_list))
-    cache.set(user.username + "__perms", perms_list)
-    # cache.persist(user.username)
+    cache.set(user.user_name + "__perms", perms_list)
+    # cache.persist(user.user_name)
     return perms_list
 
 
@@ -41,7 +41,7 @@ class RbacPermission(BasePermission):
         if not request.user:
             False
         else:
-            perms = cache.get(request.user.username + "__perms")
+            perms = cache.get(request.user.user_name + "__perms")
         if not perms:
             perms = get_permission_list(request.user)
         if perms:
