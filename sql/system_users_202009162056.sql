@@ -1,0 +1,5 @@
+INSERT INTO public.system_users ("password",last_login,user_name,nick_name,gender,phone,email,avatar_name,avatar_path,is_admin,pwd_reset_time,create_by,update_by,create_at,update_at,is_deleted,is_activate,dept_id) VALUES 
+('',NULL,'admin','管理员','男','18888888888','201507802@qq.com',NULL,NULL,true,'2020-05-03 16:38:31.000',NULL,'admin','2018-08-23 09:11:56.000','2020-05-05 10:12:21.000',false,true,2)
+,('$2a$10$4XcyudOYTSz6fue6KFNMHeUQnCX5jbBQypLEnGk1PmekXt5c95JcK',NULL,'test','测试','男','18888888889','231@qq.com',NULL,NULL,false,NULL,'admin','admin','2020-05-05 11:15:49.000','2020-05-05 11:20:51.000',false,true,2)
+,('pbkdf2_sha256$216000$AOgiOs056GHf$+fW8bFRUFRkxwVF9LP65AVYUuFBKxgv6l1CWNeJqp0c=',NULL,'admin1','管理员1','男','18888888881','354@qq.com',NULL,NULL,false,'2020-08-24 14:57:46.000',NULL,NULL,NULL,NULL,false,true,2)
+;
