@@ -51,7 +51,7 @@ class FitJSONRenderer(JSONRenderer):
             response_body.msg = data["detail"] if "detail" in data else data
         else:
             response_body.data = data
-        renderer_context.get("response").status_code = 200  # 统一成200响应,用code区分
+        # renderer_context.get("response").status_code = 200  # 统一成200响应,用code区分
         return super(FitJSONRenderer, self).render(
             response_body.dict, accepted_media_type, renderer_context
         )

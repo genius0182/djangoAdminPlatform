@@ -27,7 +27,7 @@ class BaseModel(models.Model):
         default=False, verbose_name="删除标记", help_text="删除标记"
     )
     is_activate = models.BooleanField(
-        default=True, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
+        default=False, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
     )
 
     class Meta:
@@ -42,7 +42,7 @@ class SoftModel(BaseModel):
     class Meta:
         abstract = True
 
-    def delete(self, using=None, soft=True, *args, **kwargs):
+    def delete(self, using=None, soft=False, *args, **kwargs):
         """
         这里需要真删除的话soft=False即可
         """
