@@ -27,7 +27,7 @@ class BaseModel(models.Model):
         default=False, verbose_name="删除标记", help_text="删除标记"
     )
     is_activate = models.BooleanField(
-        default=False, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
+        default=True, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
     )
 
     class Meta:
