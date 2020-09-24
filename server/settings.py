@@ -102,7 +102,7 @@ DATABASES = {
         "NAME": "aiops",
         "USER": "postgres",
         "PASSWORD": "123456",
-        "HOST": "10.142.8.40",
+        "HOST": "127.0.0.1",
         "PORT": "5432",
     }
 }
@@ -111,7 +111,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://10.142.8.40:6379",
+        "LOCATION": "redis://127.0.0.1:6379",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             # "PICKLE_VERSION": -1
