@@ -88,7 +88,12 @@ class Role(SoftModel):
     role_level = models.IntegerField("角色级别", null=True)
     description = models.CharField("描述", max_length=255, blank=True, null=True)
     data_scope = models.CharField(
-        "数据权限", max_length=255, choices=data_type_choices, default="本级及以下"
+        "数据权限",
+        max_length=255,
+        choices=data_type_choices,
+        default="自定义",
+        null=True,
+        blank=True,
     )
     menus = models.ManyToManyField(Menu, blank=True, verbose_name="角色菜单关联")
 
@@ -110,14 +115,12 @@ class Users(AbstractBaseUser):
     """
 
     id = models.AutoField("用户表主键ID", primary_key=True)
-    user_name = models.CharField(
-        "用户名", max_length=255, null=True, blank=True, unique=True
-    )
+    user_name = models.CharField("用户名", max_length=255, unique=True)
     USERNAME_FIELD = "user_name"
-    nick_name = models.CharField("昵称", max_length=255, null=True, blank=True)
+    nick_name = models.CharField("昵称", max_length=255)
     gender = models.CharField("性别 1:男,2:女", max_length=2, null=True)
-    phone = models.CharField("手机号", max_length=255, null=True, blank=True, unique=True)
-    email = models.CharField("邮箱", max_length=255, null=True, blank=True, unique=True)
+    phone = models.CharField("手机号", max_length=255, null=True)
+    email = models.CharField("邮箱", max_length=255, null=True)
     avatar_name = models.CharField(
         "头像地址", max_length=1000, null=True, blank=True, db_index=True
     )
@@ -140,7 +143,7 @@ class Users(AbstractBaseUser):
         null=True, blank=True, verbose_name="创建者", help_text="创建者", max_length=50
     )
     create_at = models.DateTimeField(
-        default=timezone.now,
+        auto_now_add=True,
         verbose_name="创建时间",
         help_text="创建时间",
         null=True,
@@ -153,7 +156,7 @@ class Users(AbstractBaseUser):
         default=False, verbose_name="删除标记", help_text="删除标记"
     )
     is_activate = models.BooleanField(
-        default=False, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
+        default=True, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
     )
 
     dept = models.ForeignKey(

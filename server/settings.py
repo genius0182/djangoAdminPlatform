@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "apps.system",
+    "apps.notice",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,6 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "drf_yasg",
+    "rest_framework_simplejwt.token_blacklist",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -99,10 +102,10 @@ WSGI_APPLICATION = "server.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "aiops",
+        "NAME": "postgres",
         "USER": "postgres",
-        "PASSWORD": "123456",
-        "HOST": "10.142.8.40",
+        "PASSWORD": "postgres",
+        "HOST": "127.0.0.1",
         "PORT": "5432",
     }
 }
@@ -111,7 +114,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://10.142.8.40:6379",
+        "LOCATION": "redis://127.0.0.1:6379",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             # "PICKLE_VERSION": -1
@@ -150,10 +153,10 @@ REST_FRAMEWORK = {
         "utils.baseResponse.FitJSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'utils.pagination.MyPagination',
-    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
-    'DATE_FORMAT': '%Y-%m-%d',
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    "DEFAULT_PAGINATION_CLASS": "utils.pagination.MyPagination",
+    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
+    "DATE_FORMAT": "%Y-%m-%d",
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
 }
 
 # drf-extensions的设置
@@ -179,7 +182,7 @@ SIMPLE_JWT = {
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
 
@@ -197,9 +200,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = False
 
 AUTH_USER_MODEL = "system.Users"
-AUTHENTICATION_BACKENDS = (
-    'apps.system.authentication.CustomBackend',
-)
+AUTHENTICATION_BACKENDS = ("apps.system.authentication.CustomBackend",)
 
 # 日志配置
 # 创建日志的路径

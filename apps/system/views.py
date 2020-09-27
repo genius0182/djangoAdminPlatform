@@ -1,6 +1,7 @@
 import logging
 
-from django.contrib.auth.hashers import check_password, make_password
+from django.core.cache import cache
+from notifications.signals import notify
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenViewBase, TokenObtainPairView
 
 from apps.system.service import MenuBuildService, DeptBuildService
+from utils.constant import DEFAULT_PASSWORD
 from utils.pagination import MyPagination
 from utils.querySetUtil import get_child_queryset2
 from .models import Dict, Dept, Role, Users, Position, Menu
@@ -26,6 +28,7 @@ from .serializers import (
     UserModifySerializer,
     UserCreateSerializer,
     PositionSerializer,
+    MyTokenVerifySerializer,
 )
 
 logger = logging.getLogger("log")
@@ -50,6 +53,10 @@ class MyTokenRefreshView(TokenViewBase):
     serializer_class = TokenRefreshSerializer
 
 
+class MyTokenVerifyView(TokenViewBase):
+    serializer_class = MyTokenVerifySerializer
+
+
 class TestRoleView(APIView):
     @cache_response(key_func="role_func")
     def get(self, request, *args, **kwargs):
@@ -61,6 +68,19 @@ class TestRoleView(APIView):
         return "role_{}".format(request.user.id)
 
 
+class LogoutView(APIView):
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):  # 可将token加入黑名单
+        serializer = UserListSerializer(data=request.data)
+        if serializer:
+            serializer.is_valid(raise_exception=False)
+            user_name = serializer.data["user_name"]
+            cache.delete(user_name + "__token")
+            cache.delete(user_name + "__perms")
+        return Response(status=status.HTTP_200_OK)
+
+
 class PositionViewSet(ModelViewSet):
     """
     部门-增删改查
@@ -68,9 +88,9 @@ class PositionViewSet(ModelViewSet):
 
     perms_map = {
         "get": "*",
-        "post": "position_create",
-        "put": "position_update",
-        "delete": "position_delete",
+        "post": "position_add",
+        "put": "position_edit",
+        "delete": "position_del",
     }
     queryset = Position.objects.all()
     serializer_class = PositionSerializer
@@ -85,11 +105,10 @@ class PositionViewSet(ModelViewSet):
         if position_name:
             return Position.objects.filter(
                 is_deleted=False,
-                is_activate=True,
                 position_name__contains=position_name,
             )
         else:
-            return Position.objects.filter(is_deleted=False, is_activate=True)
+            return Position.objects.filter(is_deleted=False)
 
     def paginate_queryset(self, queryset):
         """
@@ -109,9 +128,9 @@ class DeptViewSet(ModelViewSet):
 
     perms_map = {
         "get": "*",
-        "post": "dept_create",
-        "put": "dept_update",
-        "delete": "dept_delete",
+        "post": "dept_add",
+        "put": "dept_edit",
+        "delete": "dept_del",
     }
     queryset = Dept.objects.all()
     serializer_class = DeptSerializer
@@ -151,9 +170,9 @@ class RoleViewSet(ModelViewSet):
 
     perms_map = {
         "get": "*",
-        "post": "role_create",
-        "put": "role_update",
-        "delete": "role_delete",
+        "post": "role_add",
+        "put": "role_edit",
+        "delete": "role_del",
     }
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
@@ -166,11 +185,9 @@ class RoleViewSet(ModelViewSet):
     def get_queryset(self, *args, **kwargs):
         role_name = self.request.query_params.get("role_name", None)
         if role_name:
-            return Role.objects.filter(
-                is_deleted=False, is_activate=True, role_name__contains=role_name
-            )
+            return Role.objects.filter(is_deleted=False, role_name__contains=role_name)
         else:
-            return Role.objects.filter(is_deleted=False, is_activate=True)
+            return Role.objects.filter(is_deleted=False)
 
     def paginate_queryset(self, queryset):
         """
@@ -182,15 +199,19 @@ class RoleViewSet(ModelViewSet):
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
+    # def update(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+
 
 class MenuViewSet(ModelViewSet):
     """"""
 
     perms_map = {
         "get": "*",
-        "post": "menu_create",
-        "put": "menu_update",
-        "delete": "menu_delete",
+        "post": "menu_add",
+        "put": "menu_edit",
+        "delete": "menu_del",
     }
     queryset = Menu.objects.all()
     serializer_class = MenuSerializer
@@ -242,7 +263,10 @@ class MenuViewSet(ModelViewSet):
 
 class TestView(APIView):
     perms_map = {"get": "test_view"}  # 单个API控权
-    pass
+
+    def get(self, request, *args, **kwargs):
+        notify.send(request.user, recipient=request.user, verb="通知test")
+        return Response(status=status.HTTP_200_OK)
 
 
 class DictViewSet(ModelViewSet):
@@ -252,9 +276,9 @@ class DictViewSet(ModelViewSet):
 
     perms_map = {
         "get": "*",
-        "post": "dict_create",
-        "put": "dict_update",
-        "delete": "dict_delete",
+        "post": "dict_add",
+        "put": "dict_edit",
+        "delete": "dict_del",
     }
     # queryset = Dict.objects.get_queryset(all=True) # 获取全部的,包括软删除的
     queryset = Dict.objects.all()
@@ -268,11 +292,9 @@ class DictViewSet(ModelViewSet):
     def get_queryset(self, *args, **kwargs):
         dict_name = self.request.query_params.get("dict_name", None)
         if dict_name:
-            return Dict.objects.filter(
-                is_deleted=False, is_activate=True, dict_name__contains=dict_name
-            )
+            return Dict.objects.filter(is_deleted=False, dict_name__contains=dict_name)
         else:
-            return Dict.objects.filter(is_deleted=False, is_activate=True)
+            return Dict.objects.filter(is_deleted=False)
 
     def paginate_queryset(self, queryset):
         """
@@ -307,9 +329,9 @@ class UserViewSet(ModelViewSet):
 
     perms_map = {
         "get": "*",
-        "post": "user_create",
-        "put": "user_update",
-        "delete": "user_delete",
+        "post": "user_add",
+        "put": "user_edit",
+        "delete": "user_del",
     }
     queryset = Users.objects.all()
     serializer_class = UserListSerializer
@@ -338,7 +360,7 @@ class UserViewSet(ModelViewSet):
             dept_query_set = get_child_queryset2(Dept.objects.get(pk=dept))
             queryset = queryset.filter(dept__in=dept_query_set)
         if user_name:
-            queryset = queryset.filter(user_name=user_name)
+            queryset = queryset.filter(user_name__contains=user_name, is_deleted=False)
         return queryset
 
     def get_serializer_class(self):
@@ -351,11 +373,7 @@ class UserViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # 创建用户默认添加密码
-        password = request.data["password"] if "password" in request.data else None
-        if password:
-            password = make_password(password)
-        else:
-            password = make_password("123456")
+        password = DEFAULT_PASSWORD
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(password=password)
@@ -364,20 +382,20 @@ class UserViewSet(ModelViewSet):
     @action(
         methods=["put"],
         detail=False,
-        permission_classes=[IsAuthenticated],  # perms_map={'put':'change_password'}
-        url_name="change_password",
+        # permission_classes=[IsAuthenticated],  # perms_map={'put':'change_password'}
+        url_path="change_password",
     )
-    def password(self, request, pk=None):
+    def password(self, request):
         """
         修改密码
         """
         user = request.user
         old_password = request.data["old_password"]
-        if check_password(old_password, user.password):
+        if user.password == old_password:
             new_password1 = request.data["new_password1"]
             new_password2 = request.data["new_password2"]
             if new_password1 == new_password2:
-                user.set_password(new_password2)
+                user.password = new_password2
                 user.save()
                 return Response("密码修改成功!", status=status.HTTP_200_OK)
             else:

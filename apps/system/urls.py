@@ -11,6 +11,7 @@ from .views import (
     TestRoleView,
     MyTokenObtainPairView,
     PositionViewSet,
+    LogoutView,
 )
 
 router = routers.DefaultRouter()
@@ -24,8 +25,7 @@ router.register("position", PositionViewSet, basename="position")
 urlpatterns = [
     path("", include(router.urls)),
     path("test/", TestView.as_view()),
-    # path("build/", BuildMenuView.as_view()),
-    # path("allMenu/", MenuAllView.as_view()),
     path("roleTest/", TestRoleView.as_view()),
     path("login/", MyTokenObtainPairView.as_view()),
+    path("logout/", LogoutView.as_view()),
 ]

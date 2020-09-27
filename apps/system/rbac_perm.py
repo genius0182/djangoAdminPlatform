@@ -1,6 +1,8 @@
 from django.core.cache import cache
+from jwt import decode as jwt_decode
 from rest_framework.permissions import BasePermission
 
+from server.settings import SECRET_KEY
 from utils.querySetUtil import get_child_queryset2
 from .models import Menu
 
@@ -39,9 +41,20 @@ class RbacPermission(BasePermission):
         :return:
         """
         if not request.user:
-            False
+            return False
         else:
             perms = cache.get(request.user.user_name + "__perms")
+        token = cache.get(request.user.user_name + "__token")
+        if token:
+            try:
+                decoded_data = jwt_decode(token, SECRET_KEY, algorithms=["HS256"])
+                user_id = decoded_data.get("user_id")
+                if request.user.id != user_id:
+                    return False
+            except Exception:
+                return False
+        else:
+            return False
         if not perms:
             perms = get_permission_list(request.user)
         if perms:

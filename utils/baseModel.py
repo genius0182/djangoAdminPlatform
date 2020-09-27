@@ -1,4 +1,3 @@
-import django.utils.timezone as timezone
 from django.db import models
 
 
@@ -14,7 +13,7 @@ class BaseModel(models.Model):
         null=True, blank=True, verbose_name="创建者", help_text="创建者", max_length=50
     )
     create_at = models.DateTimeField(
-        default=timezone.now,
+        auto_now_add=True,
         verbose_name="创建时间",
         help_text="创建时间",
         null=True,
@@ -27,7 +26,7 @@ class BaseModel(models.Model):
         default=False, verbose_name="删除标记", help_text="删除标记"
     )
     is_activate = models.BooleanField(
-        default=False, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
+        default=True, verbose_name="状态：1启用、0禁用", help_text="状态：1启用、0禁用"
     )
 
     class Meta:

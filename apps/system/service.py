@@ -28,7 +28,7 @@ class MenuBuildService:
         if not user.is_admin:
             for role in roles:
                 temp_menus = (
-                    role.menus.filter(is_activate=True, is_deleted=False, menu_type__in=[0, 1, 2])
+                    role.menus.filter(is_deleted=False, menu_type__in=[0, 1, 2])
                         .distinct()
                         .order_by("menu_sort")
                 )
@@ -39,7 +39,7 @@ class MenuBuildService:
                     all_menus = all_menus | temp_menus
         else:
             all_menus = Menu.objects.filter(
-                is_activate=True, is_deleted=False, menu_type__in=[0, 1, 2]
+                is_deleted=False, menu_type__in=[0, 1, 2]
             ).order_by("menu_sort")
 
         if all_menus and len(all_menus) > 0:
@@ -53,12 +53,12 @@ class MenuBuildService:
 
         """
         if menu_name:
-            all_menus = Menu.objects.filter(is_activate=True, is_deleted=False, menu_name__contains=menu_name).order_by(
-                "menu_sort")
+            all_menus = Menu.objects.filter(
+                is_deleted=False, menu_name__contains=menu_name
+            ).order_by("menu_sort")
             result = self.get_query_menus_child_all(all_menus)
         else:
-            all_menus = Menu.objects.filter(is_activate=True, is_deleted=False).order_by(
-                "menu_sort")
+            all_menus = Menu.objects.filter(is_deleted=False).order_by("menu_sort")
             result = self.get_menus_child_all(all_menus)
         return result
 
@@ -92,7 +92,7 @@ class MenuBuildService:
         """
         root_list = []
         for menu in menus:
-            if (menu.pid is None) or (not menu.sidebar):
+            if menu.pid is None:
                 result = MenuSerializer(menu).data
                 root_list.append(result)
         for root in root_list:
@@ -124,14 +124,18 @@ class MenuBuildService:
 
 
 class DeptBuildService:
-
     def get_dept_all(self, dept_name):
         if dept_name:
-            dept_list = Dept.objects.filter(is_activate=True, is_deleted=False, dept_name__contains=dept_name).order_by(
-                "dept_sort")
+            dept_list = Dept.objects.filter(
+                is_deleted=False, dept_name__contains=dept_name
+            ).order_by("dept_sort")
+            # pid_list = [dept.dept_id for dept in dept_list]
+            # chile_list = Dept.objects.filter(is_deleted=False, pid__in=pid_list).order_by(
+            #     "dept_sort")
+            # dept_list = dept_list | chile_list
             result = self.get_query_dept_child_all(dept_list)
         else:
-            dept_list = Dept.objects.filter(is_activate=True, is_deleted=False).order_by("dept_sort")
+            dept_list = Dept.objects.filter(is_deleted=False).order_by("dept_sort")
             result = self.get_dept_child_all(dept_list)
         return result
 
@@ -149,7 +153,7 @@ class DeptBuildService:
             result = DeptSerializer(dept).data
             root_list.append(result)
         for root in root_list:
-            root_child = self.get_child(dept_list, root["dept_id"])
+            root_child = self.get_query_child(root["dept_id"])
             if root_child:
                 root["children"] = root_child
         return root_list
@@ -191,6 +195,19 @@ class DeptBuildService:
                 child_list.append(child_result)
             for child_dept in child_list:
                 child = self.get_child(dept_list, child_dept["dept_id"])
+                if child:
+                    child_dept["children"] = child
+        return child_list
+
+    def get_query_child(self, dept_id):
+        child_list = []
+        children = Dept.objects.filter(is_deleted=False, pid=dept_id).order_by(
+            "dept_sort"
+        )
+        if children:
+            child_list = [DeptSerializer(child).data for child in children]
+            for child_dept in child_list:
+                child = self.get_query_child(child_dept["dept_id"])
                 if child:
                     child_dept["children"] = child
         return child_list
