@@ -3,9 +3,13 @@
 # file : service.py
 # IDE: PyCharm
 
+import logging
+
 # ! -*- coding: utf-8 -*-
 from apps.system.models import Menu, Dept
 from apps.system.serializers import MenuSerializer, DeptSerializer
+
+logger = logging.getLogger("log")
 
 
 class MenuBuildService:
@@ -23,7 +27,7 @@ class MenuBuildService:
 
         """
         roles = user.roles.all().distinct()
-        all_menus = None
+        all_sql_menus = None
         result = []
         if not user.is_admin:
             for role in roles:
@@ -33,16 +37,17 @@ class MenuBuildService:
                         .order_by("menu_sort")
                 )
                 # 合并queryset
-                if all_menus is None:
-                    all_menus = temp_menus
+                if all_sql_menus is None:
+                    all_sql_menus = temp_menus
                 else:
-                    all_menus = all_menus | temp_menus
+                    all_sql_menus = all_sql_menus | temp_menus
         else:
-            all_menus = Menu.objects.filter(
+            all_sql_menus = Menu.objects.filter(
                 is_deleted=False, menu_type__in=[0, 1, 2]
             ).order_by("menu_sort")
 
-        if all_menus and len(all_menus) > 0:
+        if all_sql_menus and len(all_sql_menus) > 0:
+            all_menus = self.handler_menus_data(all_sql_menus)
             result = self.get_menus_child_all(all_menus)
         return result
 
@@ -53,13 +58,21 @@ class MenuBuildService:
 
         """
         if menu_name:
-            all_menus = Menu.objects.filter(
+            all_sql_menus = Menu.objects.filter(
                 is_deleted=False, menu_name__contains=menu_name
             ).order_by("menu_sort")
+            all_menus = self.handler_menus_data(all_sql_menus)
             result = self.get_query_menus_child_all(all_menus)
         else:
-            all_menus = Menu.objects.filter(is_deleted=False).order_by("menu_sort")
+            all_sql_menus = Menu.objects.filter(is_deleted=False).order_by("menu_sort")
+            all_menus = self.handler_menus_data(all_sql_menus)
             result = self.get_menus_child_all(all_menus)
+
+        return result
+
+    @staticmethod
+    def handler_menus_data(menus):
+        result = [MenuSerializer(menu).data for menu in menus]
         return result
 
     def get_query_menus_child_all(self, menus):
@@ -73,7 +86,7 @@ class MenuBuildService:
         """
         root_list = []
         for menu in menus:
-            result = MenuSerializer(menu).data
+            result = menu
             root_list.append(result)
         for root in root_list:
             root_child = self.get_child(menus, root["menu_id"])
@@ -90,15 +103,17 @@ class MenuBuildService:
         Returns: 树型结构菜单
 
         """
+
         root_list = []
         for menu in menus:
-            if menu.pid is None:
-                result = MenuSerializer(menu).data
+            if menu["pid"] is None:
+                result = menu
                 root_list.append(result)
         for root in root_list:
             root_child = self.get_child(menus, root["menu_id"])
             if root_child:
                 root["children"] = root_child
+
         return root_list
 
     def get_child(self, menus, menu_id):
@@ -113,8 +128,8 @@ class MenuBuildService:
         """
         child_list = []
         for menu in menus:
-            if menu.pid == menu_id:
-                child_result = MenuSerializer(menu).data
+            if menu["pid"] == menu_id:
+                child_result = menu
                 child_list.append(child_result)
             for child_menu in child_list:
                 child = self.get_child(menus, child_menu["menu_id"])
@@ -126,17 +141,20 @@ class MenuBuildService:
 class DeptBuildService:
     def get_dept_all(self, dept_name):
         if dept_name:
-            dept_list = Dept.objects.filter(
+            dept_sql_list = Dept.objects.filter(
                 is_deleted=False, dept_name__contains=dept_name
             ).order_by("dept_sort")
-            # pid_list = [dept.dept_id for dept in dept_list]
-            # chile_list = Dept.objects.filter(is_deleted=False, pid__in=pid_list).order_by(
-            #     "dept_sort")
-            # dept_list = dept_list | chile_list
+            dept_list = self.handler_dept_list_data(dept_sql_list)
             result = self.get_query_dept_child_all(dept_list)
         else:
-            dept_list = Dept.objects.filter(is_deleted=False).order_by("dept_sort")
+            dept_sql_list = Dept.objects.filter(is_deleted=False).order_by("dept_sort")
+            dept_list = self.handler_dept_list_data(dept_sql_list)
             result = self.get_dept_child_all(dept_list)
+        return result
+
+    @staticmethod
+    def handler_dept_list_data(dept_list):
+        result = [DeptSerializer(dept).data for dept in dept_list]
         return result
 
     def get_query_dept_child_all(self, dept_list):
@@ -150,7 +168,7 @@ class DeptBuildService:
         """
         root_list = []
         for dept in dept_list:
-            result = DeptSerializer(dept).data
+            result = dept
             root_list.append(result)
         for root in root_list:
             root_child = self.get_query_child(root["dept_id"])
@@ -169,8 +187,8 @@ class DeptBuildService:
         """
         root_list = []
         for dept in dept_list:
-            if dept.pid is None:
-                result = DeptSerializer(dept).data
+            if dept["pid"] is None:
+                result = dept
                 root_list.append(result)
         for root in root_list:
             root_child = self.get_child(dept_list, root["dept_id"])
@@ -190,8 +208,8 @@ class DeptBuildService:
         """
         child_list = []
         for dept in dept_list:
-            if dept.pid == dept_id:
-                child_result = DeptSerializer(dept).data
+            if dept["pid"] == dept_id:
+                child_result = dept
                 child_list.append(child_result)
             for child_dept in child_list:
                 child = self.get_child(dept_list, child_dept["dept_id"])

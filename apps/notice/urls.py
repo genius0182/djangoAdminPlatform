@@ -14,8 +14,6 @@ router = routers.DefaultRouter()
 router.register("list", CommentNoticeListView, basename="list")
 urlpatterns = [
     path("", include(router.urls)),
-    # 通知列表
-    # path("list/", CommentNoticeListView.as_view()),
     # 更新通知状态
-    path("update/", CommentNoticeUpdateView.as_view()),
+    path("markRead/<notice_id>/", CommentNoticeUpdateView.as_view()),
 ]

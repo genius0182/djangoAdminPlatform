@@ -11,3 +11,4 @@ mysqlclient==2.0.1
 drf-extensions==0.6.0
 drf-yasg==1.17.1
 django_notifications_hq==1.6.0
+pycryptodome==3.9.8

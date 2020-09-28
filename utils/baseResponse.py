@@ -48,7 +48,11 @@ class FitJSONRenderer(JSONRenderer):
         response = renderer_context.get("response")
         response_body.code = response.status_code
         if response_body.code >= 400:  # 响应异常
-            response_body.msg = data["detail"] if "detail" in data else data
+            msg = data["detail"] if "detail" in data else data
+            if isinstance(msg, dict):
+                response_body.msg = msg.values()
+            else:
+                response_body.msg = [msg]
         else:
             response_body.data = data
         # renderer_context.get("response").status_code = 200  # 统一成200响应,用code区分

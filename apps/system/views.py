@@ -1,26 +1,27 @@
 import logging
 
+from django.contrib.auth.hashers import check_password, make_password
 from django.core.cache import cache
 from notifications.signals import notify
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_extensions.cache.decorators import cache_response
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenViewBase, TokenObtainPairView
 
+from apps.system.rbac_perm import RbacPermission
 from apps.system.service import MenuBuildService, DeptBuildService
 from utils.constant import DEFAULT_PASSWORD
+from utils.crypto_util import rsa_decode
 from utils.pagination import MyPagination
 from utils.querySetUtil import get_child_queryset2
-from .models import Dict, Dept, Role, Users, Position, Menu
-from .rbac_perm import get_permission_list
+from .models import Dict, DictType, Dept, Role, Users, Position, Menu
 from .serializers import (
     MyTokenObtainPairSerializer,
     DictSerializer,
+    DictTypeSerializer,
     RoleSerializer,
     DeptSerializer,
     MenuSerializer,
@@ -57,8 +58,16 @@ class MyTokenVerifyView(TokenViewBase):
     serializer_class = MyTokenVerifySerializer
 
 
+class TestView(APIView):
+    perms_map = {"get": "test_view"}  # 单个API控权
+
+    def get(self, request, *args, **kwargs):
+        notify.send(request.user, recipient=request.user, verb="通知test")
+        return Response(status=status.HTTP_200_OK)
+
+
 class TestRoleView(APIView):
-    @cache_response(key_func="role_func")
+    # @cache_response(key_func="role_func")
     def get(self, request, *args, **kwargs):
         roles = Role.objects.all()
         serializer = RoleSerializer(roles, many=True)
@@ -83,7 +92,7 @@ class LogoutView(APIView):
 
 class PositionViewSet(ModelViewSet):
     """
-    部门-增删改查
+    岗位-增删改查
     """
 
     perms_map = {
@@ -96,8 +105,8 @@ class PositionViewSet(ModelViewSet):
     serializer_class = PositionSerializer
     pagination_class = None
     search_fields = ["position_name", "method"]
-    ordering_fields = ["pk"]
-    ordering = ["pk"]
+    ordering_fields = ["position_id"]
+    ordering = ["-position_id"]
     _paginator = MyPagination()
 
     def get_queryset(self, *args, **kwargs):
@@ -106,9 +115,9 @@ class PositionViewSet(ModelViewSet):
             return Position.objects.filter(
                 is_deleted=False,
                 position_name__contains=position_name,
-            )
+            ).order_by("-position_id")
         else:
-            return Position.objects.filter(is_deleted=False)
+            return Position.objects.filter(is_deleted=False).order_by("-position_id")
 
     def paginate_queryset(self, queryset):
         """
@@ -136,8 +145,8 @@ class DeptViewSet(ModelViewSet):
     serializer_class = DeptSerializer
     pagination_class = None
     search_fields = ["dept_name", "method"]
-    ordering_fields = ["pk"]
-    ordering = ["pk"]
+    # ordering_fields = ["pk"]
+    # ordering = ["pk"]
 
     _paginator = MyPagination()
 
@@ -178,16 +187,18 @@ class RoleViewSet(ModelViewSet):
     serializer_class = RoleSerializer
     pagination_class = None
     search_fields = ["role_name"]
-    ordering_fields = ["pk"]
-    ordering = ["pk"]
+    # ordering_fields = ["role_id"]
+    # ordering = ["-role_id"]
     _paginator = MyPagination()
 
     def get_queryset(self, *args, **kwargs):
         role_name = self.request.query_params.get("role_name", None)
         if role_name:
-            return Role.objects.filter(is_deleted=False, role_name__contains=role_name)
+            return Role.objects.filter(
+                is_deleted=False, role_name__contains=role_name
+            ).order_by("-role_id")
         else:
-            return Role.objects.filter(is_deleted=False)
+            return Role.objects.filter(is_deleted=False).order_by("-role_id")
 
     def paginate_queryset(self, queryset):
         """
@@ -198,10 +209,6 @@ class RoleViewSet(ModelViewSet):
         elif not self.request.query_params.get("page", None):
             return None
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
-
-    # def update(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
 
 
 class MenuViewSet(ModelViewSet):
@@ -217,8 +224,9 @@ class MenuViewSet(ModelViewSet):
     serializer_class = MenuSerializer
     pagination_class = None
     search_fields = ["title"]
-    ordering_fields = ["pk"]
-    ordering = ["pk"]
+
+    # ordering_fields = ["pk"]
+    # ordering = ["pk"]
 
     # _paginator = MyPagination()
     #
@@ -261,12 +269,44 @@ class MenuViewSet(ModelViewSet):
         return Response(result)
 
 
-class TestView(APIView):
-    perms_map = {"get": "test_view"}  # 单个API控权
+class DictTypeViewSet(ModelViewSet):
+    """
+    数据字典类型-增删改查
+    """
 
-    def get(self, request, *args, **kwargs):
-        notify.send(request.user, recipient=request.user, verb="通知test")
-        return Response(status=status.HTTP_200_OK)
+    perms_map = {
+        "get": "*",
+        "post": "dict_type_add",
+        "put": "dict_type_edit",
+        "delete": "dict_type_del",
+    }
+    queryset = DictType.objects.all()
+    serializer_class = DictTypeSerializer
+    pagination_class = None
+    search_fields = ["dict_type_name"]
+    ordering_fields = ["code"]
+    ordering = ["-code"]
+    _paginator = MyPagination()
+
+    def get_queryset(self, *args, **kwargs):
+        dict_type_name = self.request.query_params.get("dict_type_name", None)
+        if dict_type_name:
+            return DictType.objects.filter(
+                is_deleted=False,
+                dict_type_name__contains=dict_type_name,
+            ).order_by("-dict_type_id")
+        else:
+            return DictType.objects.filter(is_deleted=False).order_by("-dict_type_id")
+
+    def paginate_queryset(self, queryset):
+        """
+        如果查询参数里没有page但有type或type__code时则不分页,否则请求分页
+        """
+        if self.paginator is None:
+            return None
+        elif not self.request.query_params.get("page", None):
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
 
 class DictViewSet(ModelViewSet):
@@ -281,12 +321,12 @@ class DictViewSet(ModelViewSet):
         "delete": "dict_del",
     }
     # queryset = Dict.objects.get_queryset(all=True) # 获取全部的,包括软删除的
-    queryset = Dict.objects.all()
+    queryset = Dict.objects.all().order_by("-dict_id")
     filter_set_fields = ["type", "is_used", "type__code"]
     serializer_class = DictSerializer
     search_fields = ["dict_name"]
     ordering_fields = ["sort"]
-    ordering = ["sort"]
+    ordering = ["-sort"]
     _paginator = MyPagination()
 
     def get_queryset(self, *args, **kwargs):
@@ -333,11 +373,11 @@ class UserViewSet(ModelViewSet):
         "put": "user_edit",
         "delete": "user_del",
     }
-    queryset = Users.objects.all()
+    queryset = Users.objects.all().order_by("-id")
     serializer_class = UserListSerializer
     # filter_set_class = UserFilter
     search_fields = ["user_name", "phone", "email"]
-    ordering_fields = ["-pk"]
+    ordering_fields = ["-id"]
     _paginator = MyPagination()
 
     def paginate_queryset(self, queryset):
@@ -372,8 +412,13 @@ class UserViewSet(ModelViewSet):
         return UserModifySerializer
 
     def create(self, request, *args, **kwargs):
-        # 创建用户默认添加密码
-        password = DEFAULT_PASSWORD
+
+        password = request.data["password"] if "password" in request.data else None
+        if password:
+            password = make_password(rsa_decode(password))
+        else:
+            # 创建用户默认添加密码
+            password = make_password(DEFAULT_PASSWORD)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(password=password)
@@ -382,20 +427,33 @@ class UserViewSet(ModelViewSet):
     @action(
         methods=["put"],
         detail=False,
-        # permission_classes=[IsAuthenticated],  # perms_map={'put':'change_password'}
+        permission_classes=[RbacPermission],
         url_path="change_password",
     )
-    def password(self, request):
+    def change_password(self, request):
         """
         修改密码
         """
         user = request.user
-        old_password = request.data["old_password"]
-        if user.password == old_password:
-            new_password1 = request.data["new_password1"]
-            new_password2 = request.data["new_password2"]
-            if new_password1 == new_password2:
-                user.password = new_password2
+
+        old_password = (
+            rsa_decode(request.data["old_password"])
+            if request.data["old_password"]
+            else None
+        )
+        if old_password and check_password(old_password, user.password):
+            new_password1 = (
+                rsa_decode(request.data["new_password1"])
+                if request.data["new_password1"]
+                else None
+            )
+            new_password2 = (
+                rsa_decode(request.data["new_password2"])
+                if request.data["new_password2"]
+                else None
+            )
+            if new_password1 and new_password2 and (new_password1 == new_password2):
+                user.set_password(new_password2)
                 user.save()
                 return Response("密码修改成功!", status=status.HTTP_200_OK)
             else:
@@ -403,26 +461,16 @@ class UserViewSet(ModelViewSet):
         else:
             return Response("旧密码错误!", status=status.HTTP_400_BAD_REQUEST)
 
-    # perms_map={'get':'*'}, 自定义action控权
     @action(
-        methods=["get"],
-        detail=False,
-        url_name="my_info",
-        permission_classes=[IsAuthenticated],
+        methods=["put"],
+        detail=True,
+        permission_classes=[RbacPermission],
+        url_path="reset_password",
     )
-    def info(self, request, pk=None):
-        """
-        初始化用户信息
-        """
-        user = request.user
-        perms = get_permission_list(user)
-        data = {
-            "id": user.id,
-            "user_name": user.user_name,
-            "nick_name": user.nick_name,
-            "roles": user.roles.values_list("name", flat=True),
-            # 'avatar': request._request._current_scheme_host + '/media/' + str(user.image),
-            "avatar_path": user.avatar_path,
-            "perms": perms,
-        }
-        return Response(data)
+    def reset_password(self, request, pk=None):
+        if pk:
+            user = Users.objects.get(id=pk)
+            password = make_password(DEFAULT_PASSWORD)
+            user.set_password(password)
+            user.save()
+            return Response("密码修改成功!", status=status.HTTP_200_OK)

@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "drf_yasg",
     "rest_framework_simplejwt.token_blacklist",
-    "notifications",
+    # "notifications",
 ]
 
 MIDDLEWARE = [
@@ -201,6 +201,8 @@ CORS_ALLOW_CREDENTIALS = False
 
 AUTH_USER_MODEL = "system.Users"
 AUTHENTICATION_BACKENDS = ("apps.system.authentication.CustomBackend",)
+
+NOTIFICATIONS_NOTIFICATION_MODEL = 'notice.Notice'
 
 # 日志配置
 # 创建日志的路径

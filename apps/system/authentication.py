@@ -8,6 +8,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.db.models import Q
 
+from utils.crypto_util import rsa_decode
+
 UserModel = get_user_model()
 
 
@@ -22,9 +24,9 @@ class CustomBackend(ModelBackend):
                 Q(user_name=user_name) | Q(phone=user_name) | Q(email=user_name)
             )
         except UserModel.DoesNotExist:
-            # Run the default password hasher once to reduce the timing
-            # difference between an existing and a nonexistent user (#20760).
+
             return
         else:
-            if user and (user.password == password):
+            decode_password = rsa_decode(password)
+            if user.check_password(decode_password) and self.user_can_authenticate(user):
                 return user

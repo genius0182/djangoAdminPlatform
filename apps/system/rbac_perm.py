@@ -65,10 +65,15 @@ class RbacPermission(BasePermission):
             else:
                 perms_map = view.perms_map
                 _method = request._request.method.lower()
+                action = view.action
                 if perms_map:
                     for key in perms_map:
                         if key == _method or key == "*":
-                            if perms_map[key] in perms or perms_map[key] == "*":
+                            if action and (action in perms or perms_map[key] == "*"):
+                                return True
+                            elif action in ["create", "update", "delete", "list"] and (
+                                    perms_map[key] in perms or perms_map[key] == "*"
+                            ):
                                 return True
                 return False
         else:

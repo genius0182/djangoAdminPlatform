@@ -11,6 +11,20 @@ from rest_framework_simplejwt.serializers import (
 
 from server.settings import SECRET_KEY
 from utils.constant import E_MAIL_REGULAR, PHONE_REGULAR
+from utils.constant import (
+    JSON_EMAIL_FORMAT_VALIDATION_ERROR,
+    JSON_EMAIL_REGISTERED_VALIDATION_ERROR,
+    JSON_PHONE_REGISTERED_VALIDATION_ERROR,
+    JSON_PHONE_FORMAT_VALIDATION_ERROR,
+    JSON_ACCOUNT_VALIDATION_ERROR,
+    JSON_ROLE_VALIDATION_ERROR,
+    JSON_MENU_VALIDATION_ERROR,
+    JSON_DEPT_VALIDATION_ERROR,
+    JSON_POSITION_VALIDATION_ERROR,
+    JSON_DICT_VALIDATION_ERROR,
+    JSON_DICT_TYPE_VALIDATION_ERROR,
+    JSON_DICT_TYPE_CODE_VALIDATION_ERROR,
+)
 from .models import Dict, DictType, Dept, Menu, Role, Users, Position
 from .rbac_perm import get_permission_list
 
@@ -60,11 +74,37 @@ class DictTypeSerializer(serializers.ModelSerializer):
     数据字典类型序列化
     """
 
+    dict_type_name = serializers.CharField(required=True)
+    code = serializers.CharField(required=True)
+    dict_type_id = None
+
     class Meta:
         model = DictType
         fields = "__all__"
 
-    # TODO 字典类型名称
+    def validate_dict_type_name(self, dict_type_name):
+        if "dict_type_id" not in self.initial_data.keys():
+            if DictType.objects.filter(dict_type_name=dict_type_name).count() > 0:
+                raise serializers.ValidationError(JSON_DICT_TYPE_VALIDATION_ERROR)
+        else:
+            self.dict_type_id = self.initial_data["dict_type_id"]
+        if (
+                DictType.objects.filter(
+                    ~Q(dict_type_id=self.dict_type_id), dict_type_name=dict_type_name
+                ).count()
+                > 0
+        ):
+            raise serializers.ValidationError(JSON_DICT_TYPE_VALIDATION_ERROR)
+        return dict_type_name
+
+    def validate_code(self, code):
+        if DictType.objects.filter(code=code):
+            raise serializers.ValidationError(JSON_DICT_TYPE_CODE_VALIDATION_ERROR)
+        else:
+            self.code = self.initial_data["code"]
+        if DictType.objects.filter(~Q(code=self.code), code=code).count() > 0:
+            raise serializers.ValidationError(JSON_DICT_TYPE_CODE_VALIDATION_ERROR)
+        return code
 
 
 class DictSerializer(serializers.ModelSerializer):
@@ -72,12 +112,27 @@ class DictSerializer(serializers.ModelSerializer):
     数据字典序列化
     """
 
+    dict_name = serializers.CharField(required=True)
+
+    dict_id = None
+
     # fullname = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Dict
         fields = "__all__"
 
-    # TODO 字典名称
+    def validate_dict_name(self, dict_name):
+        if "dict_id" not in self.initial_data.keys():
+            if Dict.objects.filter(dict_name=dict_name).count() > 0:
+                raise serializers.ValidationError(JSON_DICT_VALIDATION_ERROR)
+        else:
+            self.dict_id = self.initial_data["dict_id"]
+        if (
+                Dict.objects.filter(~Q(dict_id=self.dict_id), dict_name=dict_name).count()
+                > 0
+        ):
+            raise serializers.ValidationError(JSON_DICT_VALIDATION_ERROR)
+        return dict_name
 
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -85,11 +140,28 @@ class PositionSerializer(serializers.ModelSerializer):
     职位/岗位序列化
     """
 
+    position_name = serializers.CharField(required=True)
+
+    position_id = None
+
     class Meta:
         model = Position
         fields = "__all__"
 
-    # TODO 职位名称
+    def validate_position_name(self, position_name):
+        if "position_id" not in self.initial_data.keys():
+            if Position.objects.filter(position_name=position_name).count() > 0:
+                raise serializers.ValidationError(JSON_POSITION_VALIDATION_ERROR)
+        else:
+            self.position_id = self.initial_data["position_id"]
+        if (
+                Position.objects.filter(
+                    ~Q(position_id=self.position_id), position_name=position_name
+                ).count()
+                > 0
+        ):
+            raise serializers.ValidationError(JSON_POSITION_VALIDATION_ERROR)
+        return position_name
 
 
 class DeptSerializer(serializers.ModelSerializer):
@@ -97,17 +169,34 @@ class DeptSerializer(serializers.ModelSerializer):
     部门序列化
     """
 
+    dept_name = serializers.CharField(required=True)
+
+    dept_id = None
+
     class Meta:
         model = Dept
         fields = "__all__"
 
-    # TODO 校验部门名称
+    def validate_dept_name(self, dept_name):
+        if "dept_id" not in self.initial_data.keys():
+            if Dept.objects.filter(dept_name=dept_name).count() > 0:
+                raise serializers.ValidationError(JSON_DEPT_VALIDATION_ERROR)
+        else:
+            self.dept_id = self.initial_data["dept_id"]
+        if (
+                Dept.objects.filter(~Q(dept_id=self.dept_id), dept_name=dept_name).count()
+                > 0
+        ):
+            raise serializers.ValidationError(JSON_DEPT_VALIDATION_ERROR)
+        return dept_name
 
 
 class MenuSerializer(serializers.ModelSerializer):
     """
     菜单序列化
     """
+
+    menu_name = serializers.CharField(required=True)
 
     menu_id = None
 
@@ -116,13 +205,16 @@ class MenuSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate_menu_name(self, menu_name):
-        if self.menu_id is None:
+        if "menu_id" not in self.initial_data.keys():
+            if Menu.objects.filter(menu_name=menu_name).count() > 0:
+                raise serializers.ValidationError(JSON_MENU_VALIDATION_ERROR)
+        else:
             self.menu_id = self.initial_data["menu_id"]
         if (
-                Users.objects.filter(~Q(menu_id=self.menu_id), menu_name=menu_name).count()
+                Menu.objects.filter(~Q(menu_id=self.menu_id), menu_name=menu_name).count()
                 > 0
         ):
-            raise serializers.ValidationError("菜单名称已经存在")
+            raise serializers.ValidationError(JSON_MENU_VALIDATION_ERROR)
         return menu_name
 
 
@@ -131,6 +223,7 @@ class RoleSerializer(serializers.ModelSerializer):
     角色序列化
     """
 
+    role_name = serializers.CharField(required=True)
     # menus = MenuSerializer(many=True, read_only=True)
     role_id = None
 
@@ -139,13 +232,16 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def validate_role_name(self, role_name):
-        if self.role_id is None:
+        if "role_id" not in self.initial_data.keys():
+            if Role.objects.filter(role_name=role_name).count() > 0:
+                raise serializers.ValidationError(JSON_ROLE_VALIDATION_ERROR)
+        else:
             self.role_id = self.initial_data["role_id"]
         if (
-                Users.objects.filter(~Q(role_id=self.role_id), role_name=role_name).count()
+                Role.objects.filter(~Q(role_id=self.role_id), role_name=role_name).count()
                 > 0
         ):
-            raise serializers.ValidationError("角色名称已经存在")
+            raise serializers.ValidationError(JSON_ROLE_VALIDATION_ERROR)
         return role_name
 
 
@@ -254,7 +350,7 @@ class UserModifySerializer(serializers.ModelSerializer):
         if self.user_id is None:
             self.user_id = self.initial_data["id"]
         if Users.objects.filter(~Q(id=self.user_id), user_name=user_name).count() > 0:
-            raise serializers.ValidationError(user_name + " 账号已存在")
+            raise serializers.ValidationError(JSON_ACCOUNT_VALIDATION_ERROR)
         return user_name
 
     def validate_phone(self, phone):
@@ -262,9 +358,9 @@ class UserModifySerializer(serializers.ModelSerializer):
         if self.user_id is None:
             self.user_id = self.initial_data["id"]
         if not re.match(re_phone, phone):
-            raise serializers.ValidationError("手机号码不合法")
+            raise serializers.ValidationError(JSON_PHONE_FORMAT_VALIDATION_ERROR)
         if Users.objects.filter(~Q(id=self.user_id), phone=phone).count() > 0:
-            raise serializers.ValidationError("手机号已经被注册")
+            raise serializers.ValidationError(JSON_PHONE_REGISTERED_VALIDATION_ERROR)
         return phone
 
     def validate_email(self, email):
@@ -272,9 +368,9 @@ class UserModifySerializer(serializers.ModelSerializer):
         if self.user_id is None:
             self.user_id = self.initial_data["id"]
         if not re.match(re_email, email):
-            raise serializers.ValidationError("邮箱格式不合法")
+            raise serializers.ValidationError(JSON_EMAIL_FORMAT_VALIDATION_ERROR)
         if Users.objects.filter(~Q(id=self.user_id), email=email).count() > 0:
-            raise serializers.ValidationError("邮箱已经被注册")
+            raise serializers.ValidationError(JSON_EMAIL_REGISTERED_VALIDATION_ERROR)
         return email
 
 
@@ -310,21 +406,21 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     def validate_user_name(self, user_name):
         if Users.objects.filter(user_name=user_name):
-            raise serializers.ValidationError(user_name + " 账号已存在")
+            raise serializers.ValidationError(JSON_ACCOUNT_VALIDATION_ERROR)
         return user_name
 
     def validate_phone(self, phone):
         re_phone = PHONE_REGULAR
         if not re.match(re_phone, phone):
-            raise serializers.ValidationError("手机号码不合法")
+            raise serializers.ValidationError(JSON_PHONE_FORMAT_VALIDATION_ERROR)
         if Users.objects.filter(phone=phone):
-            raise serializers.ValidationError("手机号已经被注册")
+            raise serializers.ValidationError(JSON_PHONE_REGISTERED_VALIDATION_ERROR)
         return phone
 
     def validate_email(self, email):
         re_email = E_MAIL_REGULAR
         if not re.match(re_email, email):
-            raise serializers.ValidationError("邮箱格式不合法")
+            raise serializers.ValidationError(JSON_EMAIL_FORMAT_VALIDATION_ERROR)
         if Users.objects.filter(email=email):
-            raise serializers.ValidationError("邮箱已经被注册")
+            raise serializers.ValidationError(JSON_EMAIL_REGISTERED_VALIDATION_ERROR)
         return email

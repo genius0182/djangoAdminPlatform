@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import notifications.urls
 from django.conf.urls import url
 from django.urls import path, include
 from drf_yasg import openapi
@@ -34,9 +35,9 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-
     path("system/", include("apps.system.urls")),
     path("notice/", include("apps.notice.urls")),
+    url("^notifications/", include(notifications.urls, namespace="notifications")),
     url(
         r"^swagger(?P<format>\.json|\.yaml)$",
         schema_view.without_ui(cache_timeout=0),
