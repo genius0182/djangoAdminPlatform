@@ -17,10 +17,14 @@ Django back-end management platform, including the RBAC infrastructure.
 
 I haven't found a scaffolding back-end and front-end system that can be used directly in Python, so I made one with my friends.
 
-This project is a back-end system, and the front-end system is developed using Ant-VUEgithub:https://github.com/StevenShuai/ant-design-vue-admin. 
+This project is a back-end system, and the front-end system is developed using Ant-VUE.
+github:https://github.com/StevenShuai/ant-design-vue-admin. 
 
 ## Screenshots
+login page
 ![login](./img/login.png)
+main page
+![main](./img/main.png)
 
 ## Requirements
 * python 3.7

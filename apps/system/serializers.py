@@ -322,11 +322,15 @@ class UserModifySerializer(serializers.ModelSerializer):
     """
 
     user_id = None
-    phone = serializers.CharField(max_length=11, required=True)
+    user_name = serializers.CharField(required=True)
+    phone = serializers.CharField(max_length=255, required=True)
     email = serializers.CharField(max_length=255, required=True)
     dept = serializers.PrimaryKeyRelatedField(queryset=Dept.objects.all())
     position = serializers.PrimaryKeyRelatedField(queryset=Position.objects.all())
     roles = serializers.PrimaryKeyRelatedField(many=True, queryset=Role.objects.all())
+    dept_name = serializers.StringRelatedField(source="dept")
+    position_name = serializers.StringRelatedField(source="position")
+    roles_name = serializers.StringRelatedField(source="roles", many=True)
 
     class Meta:
         model = Users
@@ -344,6 +348,9 @@ class UserModifySerializer(serializers.ModelSerializer):
             "is_admin",
             "roles",
             "position",
+            "roles_name",
+            "position_name",
+            "dept_name",
         ]
 
     def validate_user_name(self, user_name):

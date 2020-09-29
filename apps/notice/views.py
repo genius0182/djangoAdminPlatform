@@ -1,5 +1,6 @@
 # Create your views here.
 
+from notifications.signals import notify
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -8,6 +9,13 @@ from rest_framework.viewsets import ModelViewSet
 
 from apps.notice.models import Notice
 from apps.notice.serializers import NotificationSerializer
+from apps.system.models import Users
+from utils.constant import (
+    JSON_NOTICE_SEND_USER_NOT_EXIST_VALIDATION_ERROR,
+    JSON_NOTICE_TITLE_IS_NULL_VALIDATION_ERROR,
+    JSON_NOTICE_CONTENT_IS_NULL_VALIDATION_ERROR,
+    JSON_NOTICE_ID_NULL_VALIDATION_ERROR,
+)
 from utils.pagination import MyPagination
 
 
@@ -22,9 +30,13 @@ class CommentNoticeListView(ModelViewSet):
         un_read = self.request.query_params.get("un_read", None)
         if user:
             if un_read:
-                return Notice.objects.filter(deleted=False, recipient=user, unread=un_read).order_by("-id")
+                return Notice.objects.filter(
+                    deleted=False, recipient=user, unread=un_read
+                ).order_by("-id")
             else:
-                return Notice.objects.filter(deleted=False, recipient=user).order_by("-id")
+                return Notice.objects.filter(deleted=False, recipient=user).order_by(
+                    "-id"
+                )
 
     def paginate_queryset(self, queryset):
         """
@@ -45,15 +57,14 @@ class CommentNoticeListView(ModelViewSet):
     )
     def count(self, request):
         user = self.request.user
+        json_result = {}
         if user:
             un_read_count = Notice.objects.filter(
                 unread=True, deleted=False, recipient=user
             ).count()
-            json_result = {
-                "user_id": user.id,
-                "user_name": user.user_name,
-                "un_read_count": un_read_count,
-            }
+            json_result["user_id"] = user.id
+            json_result["user_name"] = user.user_name
+            json_result["un_read_count"] = un_read_count
         return Response(json_result)
 
 
@@ -64,8 +75,40 @@ class CommentNoticeUpdateView(APIView):
         # 更新单条通知
         if notice_id:
             request.user.notifications.get(id=notice_id).mark_as_read()
-        # 更新全部通知
+            return Response(status=status.HTTP_200_OK)
         else:
-            return Response(data="")
+            return Response(
+                JSON_NOTICE_ID_NULL_VALIDATION_ERROR, status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response(status=status.HTTP_200_OK)
+
+class CommentNoticeSendView(APIView):
+    def post(self, request, *args, **kwargs):
+        error_list = []
+        request_dict = request.data
+        user_id = request_dict["recipient_id"]
+        verb = request_dict["title"]
+        description = request_dict["content"]
+        if user_id is None:
+            error_list.append(JSON_NOTICE_SEND_USER_NOT_EXIST_VALIDATION_ERROR)
+        if verb is None:
+            error_list.append(JSON_NOTICE_TITLE_IS_NULL_VALIDATION_ERROR)
+        if description is None:
+            error_list.append(JSON_NOTICE_CONTENT_IS_NULL_VALIDATION_ERROR)
+
+        receive_user = Users.objects.filter(
+            id=user_id, is_deleted=False, is_activate=True
+        ).first()
+        if receive_user is None:
+            error_list.append(JSON_NOTICE_SEND_USER_NOT_EXIST_VALIDATION_ERROR)
+
+        if receive_user and verb and description:
+            notify.send(
+                request.user, recipient=receive_user, verb=verb, description=description
+            )
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(
+                error_list,
+                status=status.HTTP_400_BAD_REQUEST,
+            )

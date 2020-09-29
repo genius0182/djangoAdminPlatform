@@ -8,7 +8,11 @@
 from django.urls import path, include
 from rest_framework import routers
 
-from apps.notice.views import CommentNoticeUpdateView, CommentNoticeListView
+from apps.notice.views import (
+    CommentNoticeUpdateView,
+    CommentNoticeListView,
+    CommentNoticeSendView,
+)
 
 router = routers.DefaultRouter()
 router.register("list", CommentNoticeListView, basename="list")
@@ -16,4 +20,5 @@ urlpatterns = [
     path("", include(router.urls)),
     # 更新通知状态
     path("markRead/<notice_id>/", CommentNoticeUpdateView.as_view()),
+    path("noticeSend/", CommentNoticeSendView.as_view()),
 ]

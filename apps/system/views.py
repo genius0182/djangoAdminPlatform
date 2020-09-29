@@ -13,7 +13,12 @@ from rest_framework_simplejwt.views import TokenViewBase, TokenObtainPairView
 
 from apps.system.rbac_perm import RbacPermission
 from apps.system.service import MenuBuildService, DeptBuildService
-from utils.constant import DEFAULT_PASSWORD
+from utils.constant import (
+    DEFAULT_PASSWORD,
+    JSON_PASSWORD_CHANGE_VALIDATION,
+    JSON_PASSWORD_CONSISTENT_VALIDATION_ERROR,
+    JSON_PASSWORD_VALIDATION_ERROR,
+)
 from utils.crypto_util import rsa_decode
 from utils.pagination import MyPagination
 from utils.querySetUtil import get_child_queryset2
@@ -62,7 +67,9 @@ class TestView(APIView):
     perms_map = {"get": "test_view"}  # 单个API控权
 
     def get(self, request, *args, **kwargs):
-        notify.send(request.user, recipient=request.user, verb="通知test")
+        receive = Users.objects.get(id=31)
+        notify.send(request.user, recipient=receive, verb="系统维护通知",
+                    description="系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。系统于今晚22点，进行维护，维护期间系统不能提供服务。")
         return Response(status=status.HTTP_200_OK)
 
 
@@ -224,21 +231,6 @@ class MenuViewSet(ModelViewSet):
     serializer_class = MenuSerializer
     pagination_class = None
     search_fields = ["title"]
-
-    # ordering_fields = ["pk"]
-    # ordering = ["pk"]
-
-    # _paginator = MyPagination()
-    #
-    # def paginate_queryset(self, queryset):
-    #     """
-    #     如果查询参数里没有page但有type或type__code时则不分页,否则请求分页
-    #     """
-    #     if self.paginator is None:
-    #         return None
-    #     elif not self.request.query_params.get("page", None):
-    #         return None
-    #     return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
     @action(
         methods=["get"],
@@ -455,11 +447,18 @@ class UserViewSet(ModelViewSet):
             if new_password1 and new_password2 and (new_password1 == new_password2):
                 user.set_password(new_password2)
                 user.save()
-                return Response("密码修改成功!", status=status.HTTP_200_OK)
+                return Response(
+                    JSON_PASSWORD_CHANGE_VALIDATION, status=status.HTTP_200_OK
+                )
             else:
-                return Response("新密码两次输入不一致!", status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    JSON_PASSWORD_CONSISTENT_VALIDATION_ERROR,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
-            return Response("旧密码错误!", status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                JSON_PASSWORD_VALIDATION_ERROR, status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(
         methods=["put"],
@@ -470,7 +469,8 @@ class UserViewSet(ModelViewSet):
     def reset_password(self, request, pk=None):
         if pk:
             user = Users.objects.get(id=pk)
-            password = make_password(DEFAULT_PASSWORD)
-            user.set_password(password)
+            user.set_password(DEFAULT_PASSWORD)
             user.save()
-            return Response("密码修改成功!", status=status.HTTP_200_OK)
+            return Response(
+                JSON_PASSWORD_CHANGE_VALIDATION, status=status.HTTP_200_OK
+            )
