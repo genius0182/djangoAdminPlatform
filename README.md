@@ -10,7 +10,7 @@ Django back-office management platform, including the RBAC infrastructure.
 * [Screenshots](#screenshots)
 * [Requirements](#Requirements)
 * [Installation](#Installation)
-* [Code Structure](#Code Structure)
+* [CodeStructure](#CodeStructure)
 
 ## Overview
 Django back-end management platform, including the RBAC infrastructure.
@@ -69,7 +69,7 @@ python manage.py runserver 8000
 
 
 
-## Code Structure
+## CodeStructure
 
 djangoAdminPlatform
 
