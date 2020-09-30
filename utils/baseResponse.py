@@ -50,7 +50,24 @@ class FitJSONRenderer(JSONRenderer):
         if response_body.code >= 400:  # 响应异常
             msg = data["detail"] if "detail" in data else data
             if isinstance(msg, dict):
-                response_body.msg = msg.values()
+                msg_list = []
+                msg_dict ={}
+                for k, v in msg.items():
+                    if isinstance(v, list):
+                        us_key_list = ["US"] * len(v)
+                        cn_key_list = ["CN"] * len(v)
+                        jp_key_list = ["JP"] * len(v)
+                        temp = dict(zip(us_key_list, v))
+                        temp = dict(zip(cn_key_list, v), **temp)
+                        temp = dict(zip(jp_key_list, v), **temp)
+                        msg_list.append(temp)
+                    elif k in ["US","CN","JP"]:
+                        msg_dict[k] = v
+                    else:
+                        msg_list.append(v)
+                if len(msg_dict) > 0:
+                    msg_list.append(msg_dict)
+                response_body.msg = msg_list
             else:
                 response_body.msg = [msg]
         else:
