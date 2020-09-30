@@ -328,9 +328,9 @@ class UserModifySerializer(serializers.ModelSerializer):
     dept = serializers.PrimaryKeyRelatedField(queryset=Dept.objects.all())
     position = serializers.PrimaryKeyRelatedField(queryset=Position.objects.all())
     roles = serializers.PrimaryKeyRelatedField(many=True, queryset=Role.objects.all())
-    dept_name = serializers.StringRelatedField(source="dept")
-    position_name = serializers.StringRelatedField(source="position")
-    roles_name = serializers.StringRelatedField(source="roles", many=True)
+    dept_name = serializers.StringRelatedField(source="dept", read_only=True)
+    position_name = serializers.StringRelatedField(source="position", read_only=True)
+    roles_name = serializers.StringRelatedField(source="roles", many=True, read_only=True)
 
     class Meta:
         model = Users
