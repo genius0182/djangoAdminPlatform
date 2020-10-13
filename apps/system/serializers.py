@@ -89,10 +89,10 @@ class DictTypeSerializer(serializers.ModelSerializer):
         else:
             self.dict_type_id = self.initial_data["dict_type_id"]
         if (
-                DictType.objects.filter(
-                    ~Q(dict_type_id=self.dict_type_id), dict_type_name=dict_type_name
-                ).count()
-                > 0
+            DictType.objects.filter(
+                ~Q(dict_type_id=self.dict_type_id), dict_type_name=dict_type_name
+            ).count()
+            > 0
         ):
             raise serializers.ValidationError(JSON_DICT_TYPE_VALIDATION_ERROR)
         return dict_type_name
@@ -128,8 +128,8 @@ class DictSerializer(serializers.ModelSerializer):
         else:
             self.dict_id = self.initial_data["dict_id"]
         if (
-                Dict.objects.filter(~Q(dict_id=self.dict_id), dict_name=dict_name).count()
-                > 0
+            Dict.objects.filter(~Q(dict_id=self.dict_id), dict_name=dict_name).count()
+            > 0
         ):
             raise serializers.ValidationError(JSON_DICT_VALIDATION_ERROR)
         return dict_name
@@ -155,10 +155,10 @@ class PositionSerializer(serializers.ModelSerializer):
         else:
             self.position_id = self.initial_data["position_id"]
         if (
-                Position.objects.filter(
-                    ~Q(position_id=self.position_id), position_name=position_name
-                ).count()
-                > 0
+            Position.objects.filter(
+                ~Q(position_id=self.position_id), position_name=position_name
+            ).count()
+            > 0
         ):
             raise serializers.ValidationError(JSON_POSITION_VALIDATION_ERROR)
         return position_name
@@ -184,8 +184,8 @@ class DeptSerializer(serializers.ModelSerializer):
         else:
             self.dept_id = self.initial_data["dept_id"]
         if (
-                Dept.objects.filter(~Q(dept_id=self.dept_id), dept_name=dept_name).count()
-                > 0
+            Dept.objects.filter(~Q(dept_id=self.dept_id), dept_name=dept_name).count()
+            > 0
         ):
             raise serializers.ValidationError(JSON_DEPT_VALIDATION_ERROR)
         return dept_name
@@ -211,8 +211,8 @@ class MenuSerializer(serializers.ModelSerializer):
         else:
             self.menu_id = self.initial_data["menu_id"]
         if (
-                Menu.objects.filter(~Q(menu_id=self.menu_id), menu_name=menu_name).count()
-                > 0
+            Menu.objects.filter(~Q(menu_id=self.menu_id), menu_name=menu_name).count()
+            > 0
         ):
             raise serializers.ValidationError(JSON_MENU_VALIDATION_ERROR)
         return menu_name
@@ -238,8 +238,8 @@ class RoleSerializer(serializers.ModelSerializer):
         else:
             self.role_id = self.initial_data["role_id"]
         if (
-                Role.objects.filter(~Q(role_id=self.role_id), role_name=role_name).count()
-                > 0
+            Role.objects.filter(~Q(role_id=self.role_id), role_name=role_name).count()
+            > 0
         ):
             raise serializers.ValidationError(JSON_ROLE_VALIDATION_ERROR)
         return role_name
