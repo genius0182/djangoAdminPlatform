@@ -3,11 +3,10 @@
 # file : authentication.py
 # IDE: PyCharm
 
-from django.contrib.auth import get_user_model
 # ! -*- coding: utf-8 -*-
 from django.contrib.auth.backends import ModelBackend
 from django.db.models import Q
-
+from django.contrib.auth import get_user_model
 from utils.crypto_util import rsa_decode
 
 UserModel = get_user_model()
